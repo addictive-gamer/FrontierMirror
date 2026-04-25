@@ -1,0 +1,2898 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="violet">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a0533">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FrontierMirror">
+<meta name="description" content="Monitorización UVC profesional con streaming Twitch integrado">
+<title>FrontierMirror</title>
+
+<!-- PWA Manifest externo -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Favicon inline SVG -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%231a0533'/><circle cx='32' cy='32' r='22' fill='none' stroke='%23d0bcff' stroke-width='3'/><circle cx='32' cy='32' r='10' fill='%23d0bcff'/><circle cx='32' cy='18' r='3' fill='%23d0bcff' opacity='.6'/></svg>">
+
+<style>
+/* ============================================================
+   FrontierMirror — CSS Variables & Temas
+   ============================================================ */
+:root {
+  /* Tema base violet (default) */
+  --primary: #d0bcff;
+  --primary-container: #4f378b;
+  --on-primary: #381e72;
+  --secondary: #ccc2dc;
+  --secondary-container: #4a4458;
+  --surface: #141218;
+  --surface-variant: #49454f;
+  --surface-1: rgba(208,188,255,0.05);
+  --surface-2: rgba(208,188,255,0.08);
+  --surface-3: rgba(208,188,255,0.11);
+  --bg: #0f0d13;
+  --on-surface: #e6e1e5;
+  --on-surface-variant: #cac4d0;
+  --outline: #938f99;
+  --error: #f2b8b5;
+  --error-container: #8c1d18;
+  --success: #a8d5b5;
+  --warning: #f9d975;
+  --twitch: #9146ff;
+  --glass-bg: rgba(20,18,24,0.72);
+  --glass-border: rgba(208,188,255,0.18);
+  --glass-blur: blur(24px);
+  --radius-xl: 32px;
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --shadow-primary: 0 8px 32px rgba(208,188,255,0.15);
+  --font-display: 'Segoe UI', system-ui, sans-serif;
+  --transition: cubic-bezier(0.2, 0, 0, 1);
+  --hud-fps: #a8d5b5;
+  --hud-res: #d0bcff;
+  --hud-jitter: #f9d975;
+  --hud-uptime: #80cbc4;
+}
+
+[data-theme="teal"] {
+  --primary: #80cbc4;
+  --primary-container: #004d49;
+  --on-primary: #002523;
+  --secondary: #b2dfdb;
+  --surface: #0a1412;
+  --bg: #060e0d;
+  --on-surface: #e0f2f1;
+  --glass-border: rgba(128,203,196,0.18);
+  --surface-1: rgba(128,203,196,0.05);
+  --surface-2: rgba(128,203,196,0.08);
+  --surface-3: rgba(128,203,196,0.11);
+}
+
+[data-theme="rose"] {
+  --primary: #ffb3ba;
+  --primary-container: #5c1a22;
+  --on-primary: #3e0009;
+  --secondary: #e8b4ba;
+  --surface: #1a1013;
+  --bg: #100a0c;
+  --on-surface: #f5e6e8;
+  --glass-border: rgba(255,179,186,0.18);
+  --surface-1: rgba(255,179,186,0.05);
+  --surface-2: rgba(255,179,186,0.08);
+  --surface-3: rgba(255,179,186,0.11);
+}
+
+[data-theme="amber"] {
+  --primary: #ffcc80;
+  --primary-container: #5c3800;
+  --on-primary: #3e2000;
+  --secondary: #e8d0a0;
+  --surface: #1a1408;
+  --bg: #100d04;
+  --on-surface: #f5ede0;
+  --glass-border: rgba(255,204,128,0.18);
+  --surface-1: rgba(255,204,128,0.05);
+  --surface-2: rgba(255,204,128,0.08);
+  --surface-3: rgba(255,204,128,0.11);
+}
+
+[data-theme="midnight"] {
+  --primary: #90caf9;
+  --primary-container: #0d2744;
+  --on-primary: #002a54;
+  --secondary: #b0bec5;
+  --surface: #0a0e14;
+  --bg: #05080e;
+  --on-surface: #e1e8f0;
+  --glass-border: rgba(144,202,249,0.18);
+  --surface-1: rgba(144,202,249,0.05);
+  --surface-2: rgba(144,202,249,0.08);
+  --surface-3: rgba(144,202,249,0.11);
+}
+
+/* ============================================================
+   Reset & Base
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--on-surface);
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar custom */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface-variant); border-radius: 4px; }
+
+/* ============================================================
+   Layout Principal
+   ============================================================ */
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============================================================
+   Sidebar
+   ============================================================ */
+#sidebar {
+  width: 300px;
+  height: 100%;
+  background: var(--glass-bg);
+  border-right: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.4s var(--transition), opacity 0.4s var(--transition);
+  z-index: 10;
+  position: relative;
+}
+
+#sidebar.collapsed {
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#sidebar-inner {
+  width: 300px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header del Sidebar */
+.sidebar-header {
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.app-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.3px;
+}
+
+.app-subtitle {
+  font-size: 10px;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-top: 2px;
+}
+
+/* Tabs del sidebar */
+.sidebar-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--glass-border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  flex: 1;
+  min-width: 44px;
+  padding: 6px 4px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tab-btn svg { width: 16px; height: 16px; }
+
+.tab-btn.active {
+  background: var(--surface-2);
+  color: var(--primary);
+}
+
+.tab-btn:hover:not(.active) {
+  background: var(--surface-1);
+  color: var(--on-surface);
+}
+
+/* Contenido del sidebar */
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.tab-panel {
+  display: none;
+  padding: 12px;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeInUp 0.3s var(--transition);
+}
+
+.tab-panel.active { display: flex; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Secciones del panel */
+.panel-section {
+  background: var(--surface-1);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-title svg { width: 12px; height: 12px; opacity: 0.8; }
+
+/* Controles */
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.control-label {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.control-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  min-width: 32px;
+  text-align: right;
+}
+
+/* Slider custom */
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--surface-variant);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(208,188,255,0.4);
+  transition: transform 0.2s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+/* Toggle Switch */
+.toggle-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.toggle-label {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  flex: 1;
+}
+
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.toggle input { opacity: 0; width: 0; height: 0; }
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--surface-variant);
+  border-radius: 22px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--on-surface-variant);
+  top: 3px;
+  left: 3px;
+  transition: transform 0.3s var(--transition), background 0.3s;
+}
+
+.toggle input:checked + .toggle-slider { background: var(--primary-container); }
+.toggle input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+  background: var(--primary);
+}
+
+/* Select custom */
+select {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  color: var(--on-surface);
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23cac4d0' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+  transition: border-color 0.2s;
+}
+
+select:focus { border-color: var(--primary); }
+
+/* Input text */
+input[type=text], input[type=password], textarea {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  color: var(--on-surface);
+  font-size: 12px;
+  font-family: var(--font-display);
+  outline: none;
+  transition: border-color 0.2s;
+  resize: none;
+}
+
+input[type=text]:focus, input[type=password]:focus, textarea:focus {
+  border-color: var(--primary);
+}
+
+input[type=text]::placeholder, textarea::placeholder { color: var(--outline); }
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: 0.3px;
+}
+
+.btn svg { width: 14px; height: 14px; }
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: var(--shadow-primary); }
+
+.btn-outlined {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--glass-border);
+}
+.btn-outlined:hover { background: var(--surface-2); }
+
+.btn-danger {
+  background: var(--error-container);
+  color: var(--error);
+}
+.btn-danger:hover { filter: brightness(1.2); }
+
+.btn-twitch {
+  background: var(--twitch);
+  color: #fff;
+}
+.btn-twitch:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+.btn-full { width: 100%; }
+
+.btn-row { display: flex; gap: 6px; }
+.btn-row .btn { flex: 1; }
+
+/* Chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-lg);
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--surface-2);
+  border: 1px solid var(--glass-border);
+  color: var(--on-surface-variant);
+}
+
+.chip.active { background: var(--primary-container); border-color: var(--primary); color: var(--primary); }
+.chip.error { background: var(--error-container); border-color: var(--error); color: var(--error); }
+.chip.success { background: rgba(168,213,181,0.15); border-color: var(--success); color: var(--success); }
+.chip.warning { background: rgba(249,217,117,0.15); border-color: var(--warning); color: var(--warning); }
+
+/* Dot indicador */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.dot.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* Log de sistema */
+.log-box {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  height: 120px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.log-entry { display: flex; gap: 6px; }
+.log-time { color: var(--outline); flex-shrink: 0; }
+.log-msg { color: var(--on-surface-variant); word-break: break-all; }
+.log-msg.info { color: var(--primary); }
+.log-msg.success { color: var(--success); }
+.log-msg.warn { color: var(--warning); }
+.log-msg.error { color: var(--error); }
+
+/* Vúmetro */
+#vuMeter {
+  width: 100%;
+  height: 32px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: rgba(0,0,0,0.3);
+  position: relative;
+}
+
+#vuMeter canvas { width: 100%; height: 100%; display: block; }
+
+/* Mixer de audio */
+.mixer-track {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mixer-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--on-surface-variant);
+}
+
+/* Chat Twitch */
+#twitchChatLog {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  height: 150px;
+  overflow-y: auto;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.chat-msg { margin-bottom: 4px; word-break: break-word; }
+.chat-user { font-weight: 700; }
+.chat-text { color: var(--on-surface-variant); }
+
+/* Sidebar footer */
+.sidebar-footer {
+  padding: 10px 12px;
+  border-top: 1px solid var(--glass-border);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ============================================================
+   Área de Video Principal
+   ============================================================ */
+#main-area {
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#videoEl {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Filtros CSS en video */
+#videoEl.filtered {
+  filter: brightness(var(--vf-brightness)) contrast(var(--vf-contrast)) saturate(var(--vf-saturation)) hue-rotate(var(--vf-hue));
+}
+
+/* Estado vacío */
+#noSignal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: radial-gradient(ellipse at center, var(--surface) 0%, var(--bg) 70%);
+  pointer-events: none;
+}
+
+#noSignal.hidden { display: none; }
+
+.no-signal-icon { opacity: 0.3; animation: float 4s ease-in-out infinite; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.no-signal-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+  opacity: 0.5;
+  letter-spacing: -0.3px;
+}
+
+.no-signal-sub {
+  font-size: 13px;
+  color: var(--on-surface-variant);
+  opacity: 0.4;
+  text-align: center;
+  max-width: 280px;
+}
+
+/* ============================================================
+   HUD Flotante
+   ============================================================ */
+#hud {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-xl);
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 16px;
+  min-width: 200px;
+  transition: opacity 0.5s, transform 0.5s var(--transition);
+  z-index: 20;
+  pointer-events: none;
+}
+
+#hud.hidden {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.96);
+}
+
+.hud-item { display: flex; flex-direction: column; gap: 2px; }
+.hud-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--on-surface-variant); opacity: 0.7; }
+.hud-value { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+.hud-fps { color: var(--hud-fps); }
+.hud-res { color: var(--hud-res); font-size: 11px; margin-top: 2px; }
+.hud-jitter { color: var(--hud-jitter); }
+.hud-uptime { color: var(--hud-uptime); font-size: 13px; }
+
+/* ============================================================
+   Controles flotantes (barra inferior)
+   ============================================================ */
+#controls-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 20px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  transition: opacity 0.5s, transform 0.5s var(--transition);
+  z-index: 20;
+}
+
+#controls-bar.hidden {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+}
+
+.ctrl-group { display: flex; align-items: center; gap: 6px; }
+
+.ctrl-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  color: var(--on-surface);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s var(--transition);
+  flex-shrink: 0;
+}
+
+.ctrl-btn svg { width: 18px; height: 18px; }
+.ctrl-btn:hover { background: var(--surface-2); color: var(--primary); transform: translateY(-2px); }
+.ctrl-btn.active { background: var(--primary-container); border-color: var(--primary); color: var(--primary); }
+
+/* Toggle sidebar btn */
+#sidebarToggle {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 30;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  color: var(--primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s var(--transition);
+}
+#sidebarToggle:hover { background: var(--surface-2); transform: scale(1.05); }
+
+/* Toast notificaciones */
+#toastContainer {
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-lg);
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--on-surface);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: toastIn 0.3s var(--transition), toastOut 0.3s var(--transition) 2.7s forwards;
+  max-width: 260px;
+}
+
+.toast.success { border-color: var(--success); }
+.toast.error { border-color: var(--error); }
+.toast.warn { border-color: var(--warning); }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(20px); }
+}
+
+/* Indicador LIVE Twitch */
+#liveIndicator {
+  position: absolute;
+  top: 16px;
+  left: 64px;
+  z-index: 30;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(145,70,255,0.85);
+  border: 1px solid rgba(145,70,255,0.5);
+  backdrop-filter: blur(12px);
+  border-radius: var(--radius-lg);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  animation: liveGlow 2s infinite;
+  pointer-events: none;
+}
+
+#liveIndicator.active { display: flex; }
+
+@keyframes liveGlow {
+  0%, 100% { box-shadow: 0 0 12px rgba(145,70,255,0.5); }
+  50% { box-shadow: 0 0 24px rgba(145,70,255,0.9); }
+}
+
+/* Canvas de grabación/preview */
+#captureCanvas { display: none; }
+
+/* Media queries */
+@media (max-width: 768px) {
+  #sidebar { position: absolute; top: 0; left: 0; height: 100%; z-index: 50; }
+  #sidebar.collapsed { width: 0; }
+  #app { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside id="sidebar">
+    <div id="sidebar-inner">
+      <!-- Header -->
+      <div class="sidebar-header">
+        <div class="app-logo">
+          <!-- Logo SVG incrustado -->
+          <svg class="logo-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="lg1" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="var(--primary)" stop-opacity=".3"/>
+                <stop offset="100%" stop-color="var(--bg)" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="64" height="64" rx="14" fill="var(--surface)"/>
+            <circle cx="32" cy="32" r="24" fill="url(#lg1)" stroke="var(--primary)" stroke-width="1.5" opacity=".6"/>
+            <circle cx="32" cy="32" r="14" fill="none" stroke="var(--primary)" stroke-width="2"/>
+            <circle cx="32" cy="32" r="6" fill="var(--primary)"/>
+            <circle cx="32" cy="14" r="2.5" fill="var(--primary)" opacity=".5"/>
+            <circle cx="32" cy="50" r="2.5" fill="var(--primary)" opacity=".5"/>
+            <circle cx="14" cy="32" r="2.5" fill="var(--primary)" opacity=".5"/>
+            <circle cx="50" cy="32" r="2.5" fill="var(--primary)" opacity=".5"/>
+          </svg>
+          <div>
+            <div class="app-title">FrontierMirror</div>
+            <div class="app-subtitle">UVC Monitor v2.0</div>
+          </div>
+        </div>
+        <!-- Status chips -->
+        <div style="display:flex; gap:5px; flex-wrap:wrap; margin-top:8px;">
+          <div class="chip" id="chipDevice">
+            <div class="dot pulse"></div>
+            <span>Sin señal</span>
+          </div>
+          <div class="chip" id="chipStream">
+            <div class="dot" style="background:var(--outline)"></div>
+            <span>Offline</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs de navegación -->
+      <div class="sidebar-tabs">
+        <button class="tab-btn active" data-tab="device" onclick="switchTab('device')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L6 7h12l-2-4z"/><circle cx="12" cy="14" r="2"/></svg>
+          Video
+        </button>
+        <button class="tab-btn" data-tab="image" onclick="switchTab('image')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+          Imagen
+        </button>
+        <button class="tab-btn" data-tab="telemetry" onclick="switchTab('telemetry')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          HUD
+        </button>
+        <button class="tab-btn" data-tab="audio" onclick="switchTab('audio')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+          Audio
+        </button>
+        <button class="tab-btn" data-tab="twitch" onclick="switchTab('twitch')">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+          Twitch
+        </button>
+        <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Config
+        </button>
+      </div>
+
+      <!-- Contenido de Tabs -->
+      <div class="sidebar-content">
+
+        <!-- === TAB: Dispositivo de Video === -->
+        <div class="tab-panel active" id="tab-device">
+          <div class="panel-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L6 7h12l-2-4z"/></svg>
+              Entrada de Video
+            </div>
+            <select id="camSelect" onchange="onCamChange()">
+              <option value="">-- Buscar dispositivos --</option>
+            </select>
+            <!-- tgAutoSelect hidden — auto-detección silenciosa de capturadora UVC -->
+            <input type="checkbox" id="tgAutoSelect" checked style="display:none">
+            <select id="resSelect" onchange="savePrefs()">
+              <option value="1920x1080x60">1920×1080 @ 60fps</option>
+              <option value="1920x1080x30">1920×1080 @ 30fps</option>
+              <option value="1280x720x60">1280×720 @ 60fps</option>
+              <option value="1280x720x30">1280×720 @ 30fps</option>
+              <option value="3840x2160x30">3840×2160 @ 30fps</option>
+            </select>
+            <div class="btn-row">
+              <button class="btn btn-primary btn-sm" onclick="startCamera()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Iniciar
+              </button>
+              <button class="btn btn-outlined btn-sm" onclick="stopCamera()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12"/></svg>
+                Parar
+              </button>
+              <button class="btn btn-outlined btn-sm" onclick="enumDevices()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                Scan
+              </button>
+            </div>
+          </div>
+
+          <!-- Log de sistema -->
+          <div class="panel-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              Log de Sistema
+            </div>
+            <div class="log-box" id="sysLog"></div>
+            <button class="btn btn-outlined btn-sm btn-full" onclick="document.getElementById('sysLog').innerHTML=''">Limpiar Log</button>
+          </div>
+        </div>
+
+        <!-- === TAB: Imagen === -->
+        <div class="tab-panel" id="tab-image">
+          <div class="panel-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 7V5a2 2 0 0 1 2-2h2"/></svg>
+              Ajustes de Imagen
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <div class="control-row">
+                  <span class="control-label">Brillo</span>
+                  <span class="control-value" id="valBrightness">100</span>
+                </div>
+                <input type="range" id="slBrightness" min="0" max="200" value="100" oninput="updateFilters()" />
+              </div>
+              <div>
+                <div class="control-row">
+                  <span class="control-label">Contraste</span>
+                  <span class="control-value" id="valContrast">100</span>
+                </div>
+                <input type="range" id="slContrast" min="0" max="300" value="100" oninput="updateFilters()" />
+              </div>
+              <div>
+                <div class="control-row">
+                  <span class="control-label">Saturación</span>
+                  <span class="control-value" id="valSaturation">100</span>
+                </div>
+                <input type="range" id="slSaturation" min="0" max="300" value="100" oninput="updateFilters()" />
+              </div>
+              <div>
+                <div class="control-row">
+                  <span class="control-label">Tono (Hue)</span>
+                  <span class="control-value" id="valHue">0</span>°
+                </div>
+                <input type="range" id="slHue" min="0" max="360" value="0" oninput="updateFilters()" />
+              </div>
+              <div>
+                <div class="control-row">
+                  <span class="control-label">Opacidad</span>
+                  <span class="control-value" id="valOpacity">100</span>
+                </div>
+                <input type="range" id="slOpacity" min="10" max="100" value="100" oninput="updateFilters()" />
+              </div>
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Espejo horizontal</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgMirror" onchange="updateFilters();savePrefs()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Invertir colores</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgInvert" onchange="updateFilters();savePrefs()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Escala de grises</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgGrayscale" onchange="updateFilters();savePrefs()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="panel-section">
+            <div class="section-title">Captura</div>
+            <button class="btn btn-primary btn-full" onclick="captureScreenshot()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Capturar Pantalla
+            </button>
+          </div>
+        </div>
+
+        <!-- === TAB: Telemetría / HUD === -->
+        <div class="tab-panel" id="tab-telemetry">
+          <div class="panel-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              HUD en Tiempo Real
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Mostrar HUD</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgHUD" checked onchange="toggleHUDVis();savePrefs()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Auto-ocultar interfaz (3s)</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgAutoHide" checked onchange="savePrefs()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <!-- Stats en vivo dentro del sidebar -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+              <div style="background:rgba(0,0,0,.3);border-radius:var(--radius-md);padding:8px;text-align:center;">
+                <div style="font-size:10px;color:var(--on-surface-variant);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">FPS</div>
+                <div style="font-size:22px;font-weight:800;color:var(--hud-fps);font-variant-numeric:tabular-nums;" id="sidebarFPS">--</div>
+              </div>
+              <div style="background:rgba(0,0,0,.3);border-radius:var(--radius-md);padding:8px;text-align:center;">
+                <div style="font-size:10px;color:var(--on-surface-variant);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Jitter</div>
+                <div style="font-size:22px;font-weight:800;color:var(--hud-jitter);font-variant-numeric:tabular-nums;" id="sidebarJitter">--</div>
+              </div>
+              <div style="background:rgba(0,0,0,.3);border-radius:var(--radius-md);padding:8px;text-align:center;">
+                <div style="font-size:10px;color:var(--on-surface-variant);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Resolución</div>
+                <div style="font-size:11px;font-weight:700;color:var(--hud-res);margin-top:4px;" id="sidebarRes">--</div>
+              </div>
+              <div style="background:rgba(0,0,0,.3);border-radius:var(--radius-md);padding:8px;text-align:center;">
+                <div style="font-size:10px;color:var(--on-surface-variant);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Uptime</div>
+                <div style="font-size:14px;font-weight:700;color:var(--hud-uptime);font-variant-numeric:tabular-nums;" id="sidebarUptime">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- === TAB: Audio === -->
+        <div class="tab-panel" id="tab-audio">
+          <div class="panel-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+              Micrófono Principal
+            </div>
+            <select id="micSelect" onchange="onMicChange()">
+              <option value="">-- Seleccionar micrófono --</option>
+            </select>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Monitorizar audio (escucha en vivo)</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgAudioMonitor" onchange="toggleAudioMonitor()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Reducción de ruido (Noise Reduction)</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgNoiseReduction" checked onchange="onMicChange();savePrefs()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div style="font-size:10px;color:var(--on-surface-variant);padding:3px 0 2px;line-height:1.5;opacity:.8;">
+              🎛️ Activa filtro de paso de banda (80–8000 Hz) + supresión de ruido y eco del navegador.
+            </div>
+            <!-- tgAutoMic hidden — auto-detección silenciosa de USB Audio -->
+            <input type="checkbox" id="tgAutoMic" checked style="display:none">
+            <!-- Vúmetro -->
+            <div>
+              <div class="control-label" style="margin-bottom:6px;">Nivel de entrada</div>
+              <div id="vuMeter"><canvas id="vuCanvas"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Mixer de Audio -->
+          <div class="panel-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+              Mezclador de Audio
+            </div>
+            <div class="mixer-track">
+              <div class="mixer-label" style="display:flex;align-items:center;gap:6px;">🎥 Capturadora <span style="font-size:9px;font-weight:700;background:rgba(168,213,181,0.2);border:1px solid var(--success);color:var(--success);padding:1px 6px;border-radius:6px;letter-spacing:.8px;">RAW</span></div>
+              <div style="font-size:10px;color:var(--on-surface-variant);opacity:.75;line-height:1.4;margin-bottom:2px;">Audio sin procesamiento — directo del elemento de video.</div>
+              <div class="control-row">
+                <span class="control-label">Volumen</span>
+                <span class="control-value" id="valCaptureVol">100</span>
+              </div>
+              <input type="range" id="slCaptureVol" min="0" max="200" value="100" oninput="updateMixerVolumes()" />
+            </div>
+            <div class="mixer-track" style="margin-top:6px;">
+              <div class="mixer-label">🎙 Micrófono</div>
+              <div class="control-row">
+                <span class="control-label">Volumen</span>
+                <span class="control-value" id="valMicVol">100</span>
+              </div>
+              <input type="range" id="slMicVol" min="0" max="200" value="100" oninput="updateMixerVolumes()" />
+            </div>
+            <div class="toggle-wrap" style="margin-top:4px;">
+              <span class="toggle-label">Silenciar capturadora</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgMuteCapture" onchange="updateMixerVolumes()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Silenciar micrófono</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgMuteMic" onchange="updateMixerVolumes()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- === TAB: Twitch === -->
+        <div class="tab-panel" id="tab-twitch">
+          <div class="panel-section" style="border-color:rgba(145,70,255,0.3);">
+            <div class="section-title" style="color:var(--twitch);">
+              <svg viewBox="0 0 24 24" fill="var(--twitch)" width="12" height="12"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+              Twitch · Requiere Internet
+            </div>
+            <div style="font-size:10px;color:var(--on-surface-variant);padding:4px 0;">
+              ⚠️ Esta función requiere conexión a internet activa.
+            </div>
+            <input type="password" id="twitchKey" placeholder="Stream Key (rtmps://live.twitch.tv/...)" />
+            <input type="text" id="twitchChannel" placeholder="Nombre del canal (ej: micanal)" />
+            <div class="btn-row">
+              <button class="btn btn-twitch" id="btnGoLive" onclick="startTwitchStream()">
+                <svg viewBox="0 0 24 24" fill="white" width="14" height="14"><circle cx="12" cy="12" r="10"/></svg>
+                Ir en Vivo
+              </button>
+              <button class="btn btn-outlined btn-sm" id="btnStopLive" onclick="stopTwitchStream()" disabled>
+                Parar
+              </button>
+            </div>
+          </div>
+
+          <!-- Segundo micrófono -->
+          <div class="panel-section">
+            <div class="section-title">🎙 Segundo Micrófono (Stream)</div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Activar segundo micrófono</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgMic2Enable" onchange="toggleMic2()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <select id="mic2Select" disabled>
+              <option value="">-- Seleccionar mic 2 --</option>
+            </select>
+          </div>
+
+          <!-- Opciones de overlay -->
+          <div class="panel-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              Overlay del Chat
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Overlay de chat activo</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgChatOverlay" onchange="toggleChatOverlay()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="control-row">
+              <span class="control-label">Posición overlay</span>
+              <select id="chatOverlayPos" style="width:auto;" onchange="updateChatOverlay()">
+                <option value="bl">Inf. Izq</option>
+                <option value="br">Inf. Der</option>
+                <option value="tl">Sup. Izq</option>
+                <option value="tr">Sup. Der</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- TTS -->
+          <div class="panel-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              TTS del Chat
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Leer mensajes del chat</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgTTS" onchange="savePrefs()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <select id="ttsVoice" onchange="savePrefs()">
+              <option value="">-- Cargando voces --</option>
+            </select>
+            <div>
+              <div class="control-row">
+                <span class="control-label">Velocidad TTS</span>
+                <span class="control-value" id="valTTSRate">1.0</span>
+              </div>
+              <input type="range" id="slTTSRate" min="0.5" max="2" step="0.1" value="1" oninput="document.getElementById('valTTSRate').textContent=parseFloat(this.value).toFixed(1);savePrefs()">
+            </div>
+            <button class="btn btn-outlined btn-sm" onclick="testTTS()">Probar TTS</button>
+          </div>
+
+          <!-- Alertas del canal -->
+          <div class="panel-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Alertas del Canal
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Alertas de follows</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgAlertFollow" checked onchange="savePrefs()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Alertas de subs</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgAlertSub" checked onchange="savePrefs()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Alertas de raids</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgAlertRaid" checked onchange="savePrefs()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <button class="btn btn-outlined btn-sm" onclick="simulateAlert('follow')">Simular Alerta</button>
+          </div>
+
+          <!-- Log del chat Twitch -->
+          <div class="panel-section">
+            <div class="section-title" style="color:var(--twitch);">Log del Chat (Privado)</div>
+            <div id="twitchChatLog">
+              <div style="color:var(--on-surface-variant);font-size:11px;text-align:center;padding:20px 0;">Chat desconectado</div>
+            </div>
+            <button class="btn btn-outlined btn-sm btn-full" onclick="document.getElementById('twitchChatLog').innerHTML='<div style=color:var(--on-surface-variant);font-size:11px;text-align:center;padding:20px>Log limpiado</div>'">Limpiar chat</button>
+          </div>
+        </div>
+
+        <!-- === TAB: Configuración === -->
+        <div class="tab-panel" id="tab-settings">
+          <!-- Temas -->
+          <div class="panel-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 10 10 0 0 0 0-20"/></svg>
+              Tema de Color
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button onclick="setTheme('violet')" style="width:32px;height:32px;border-radius:50%;background:#d0bcff;border:2px solid transparent;cursor:pointer;" title="Violeta"></button>
+              <button onclick="setTheme('teal')" style="width:32px;height:32px;border-radius:50%;background:#80cbc4;border:2px solid transparent;cursor:pointer;" title="Teal"></button>
+              <button onclick="setTheme('rose')" style="width:32px;height:32px;border-radius:50%;background:#ffb3ba;border:2px solid transparent;cursor:pointer;" title="Rosa"></button>
+              <button onclick="setTheme('amber')" style="width:32px;height:32px;border-radius:50%;background:#ffcc80;border:2px solid transparent;cursor:pointer;" title="Ámbar"></button>
+              <button onclick="setTheme('midnight')" style="width:32px;height:32px;border-radius:50%;background:#90caf9;border:2px solid transparent;cursor:pointer;" title="Medianoche"></button>
+            </div>
+          </div>
+
+          <!-- Opciones generales -->
+          <div class="panel-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09"/></svg>
+              Opciones Generales
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Iniciar cámara al abrir</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgAutoStart" onchange="savePrefs()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Mostrar controles siempre</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgAlwaysControls" onchange="savePrefs()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Modo oscuro intenso</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgDeepDark" onchange="toggleDeepDark()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap">
+              <span class="toggle-label">Efectos de blur reducidos</span>
+              <label class="toggle">
+                <input type="checkbox" id="tgReducedBlur" onchange="toggleReducedBlur()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Gestión de preferencias -->
+          <div class="panel-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Preferencias
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary btn-sm" onclick="savePrefs(true)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/></svg>
+                Guardar
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="resetPrefs()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                Resetear
+              </button>
+            </div>
+            <button class="btn btn-outlined btn-sm btn-full" onclick="exportPrefs()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar Config JSON
+            </button>
+          </div>
+
+          <!-- Info de la app -->
+          <div class="panel-section">
+            <div class="section-title">Información</div>
+            <div style="font-size:11px;color:var(--on-surface-variant);line-height:1.8;">
+              <div>FrontierMirror v2.0.0</div>
+              <div>PWA · Single-file · Offline-ready</div>
+            </div>
+            <button class="btn btn-outlined btn-sm btn-full" onclick="installPWA()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Instalar como App
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /sidebar-content -->
+
+      <!-- Footer del sidebar -->
+      <div class="sidebar-footer">
+        <div style="display:flex;gap:6px;">
+          <div class="chip success" id="footerStatus">
+            <div class="dot"></div>
+            <span>Listo</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /sidebar-inner -->
+  </aside>
+
+  <!-- ===== ÁREA DE VIDEO PRINCIPAL ===== -->
+  <main id="main-area">
+
+    <!-- Toggle sidebar (siempre visible) -->
+    <button id="sidebarToggle" onclick="toggleSidebar()" title="Mostrar/Ocultar panel">
+      <svg id="sidebarToggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </button>
+
+    <!-- Indicador LIVE -->
+    <div id="liveIndicator">
+      <div class="dot pulse" style="background:#fff"></div>
+      EN VIVO
+    </div>
+
+    <!-- Video element -->
+    <video id="videoEl" autoplay playsinline muted></video>
+
+    <!-- Canvas oculto para capturas -->
+    <canvas id="captureCanvas"></canvas>
+
+    <!-- Pantalla "Sin señal" -->
+    <div id="noSignal">
+      <div class="no-signal-icon">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="40" cy="40" r="38" stroke="var(--primary)" stroke-width="2" opacity=".3"/>
+          <circle cx="40" cy="40" r="24" stroke="var(--primary)" stroke-width="2" opacity=".5"/>
+          <circle cx="40" cy="40" r="10" fill="var(--primary)" opacity=".4"/>
+          <line x1="10" y1="10" x2="70" y2="70" stroke="var(--error)" stroke-width="2.5" opacity=".5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="no-signal-text">Sin señal de video</div>
+      <div class="no-signal-sub">Selecciona una cámara en el panel lateral o presiona "Scan" para buscar dispositivos</div>
+      <button class="btn btn-primary" onclick="enumDevices()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        Buscar dispositivos
+      </button>
+    </div>
+
+    <!-- HUD Flotante -->
+    <div id="hud">
+      <div class="hud-item">
+        <div class="hud-label">FPS</div>
+        <div class="hud-value hud-fps" id="hudFPS">--</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">Jitter</div>
+        <div class="hud-value hud-jitter" id="hudJitter">--<span style="font-size:10px;font-weight:400;">ms</span></div>
+      </div>
+      <div class="hud-item" style="grid-column:1/-1;">
+        <div class="hud-label">Resolución</div>
+        <div class="hud-value hud-res" id="hudRes">---</div>
+      </div>
+      <div class="hud-item" style="grid-column:1/-1;">
+        <div class="hud-label">Uptime</div>
+        <div class="hud-value hud-uptime" id="hudUptime">00:00:00</div>
+      </div>
+    </div>
+
+    <!-- Barra de controles inferior -->
+    <div id="controls-bar">
+      <div class="ctrl-group">
+        <button class="ctrl-btn" onclick="startCamera()" title="Iniciar cámara">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <button class="ctrl-btn" onclick="stopCamera()" title="Parar cámara">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg>
+        </button>
+        <button class="ctrl-btn" onclick="captureScreenshot()" title="Capturar pantalla">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </button>
+      </div>
+      <div class="ctrl-group">
+        <button class="ctrl-btn" id="btnFullscreen" onclick="toggleFullscreen()" title="Pantalla completa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+        </button>
+        <button class="ctrl-btn" onclick="switchTab('twitch')" title="Ir a Twitch" style="color:var(--twitch);">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Overlay del chat Twitch en video -->
+    <div id="chatOverlayEl" style="position:absolute;bottom:60px;left:16px;width:220px;max-height:200px;overflow:hidden;display:none;pointer-events:none;z-index:25;"></div>
+
+    <!-- Overlay de alertas -->
+    <div id="alertOverlay" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;z-index:35;pointer-events:none;"></div>
+
+  </main>
+</div>
+
+<!-- Toast container -->
+<div id="toastContainer"></div>
+
+<!-- Service Worker y lógica principal -->
+<script>
+/* ============================================================
+   FrontierMirror — JavaScript Core
+   ============================================================ */
+
+// === Estado global ===
+const STATE = {
+  stream: null,
+  audioCtx: null,
+  analyserNode: null,
+  micStream: null,
+  mic2Stream: null,
+  captureGainNode: null,
+  micGainNode: null,
+  monitorNode: null,
+  startTime: null,
+  frameCount: 0,
+  lastFrameTime: 0,
+  fps: 0,
+  jitterMs: 0,
+  uptimeInterval: null,
+  fpsInterval: null,
+  autoHideTimeout: null,
+  uiVisible: true,
+  sidebarOpen: true,
+  twitchSocket: null,
+  twitchStreaming: false,
+  mediaRecorder: null,
+  deferredPrompt: null,
+  vuAnimFrame: null,
+  chatOverlayMessages: [],
+  chatOverlayTimer: null,
+  noiseFilterNode: null,
+  captureSourceNode: null,
+  captureGainNode: null,
+};
+
+// === Preferencias por defecto ===
+const DEFAULT_PREFS = {
+  theme: 'violet',
+  brightness: 100,
+  contrast: 100,
+  saturation: 100,
+  hue: 0,
+  opacity: 100,
+  mirror: false,
+  invert: false,
+  grayscale: false,
+  autoSelect: true,
+  autoMic: true,
+  autoStart: false,
+  alwaysControls: false,
+  deepDark: false,
+  reducedBlur: false,
+  showHUD: true,
+  autoHide: true,
+  resolution: '1920x1080x60',
+  captureVol: 100,
+  micVol: 100,
+  twitchChannel: '',
+  ttsRate: 1.0,
+  ttsVoice: '',
+  tgTTS: false,
+  tgAlertFollow: true,
+  tgAlertSub: true,
+  tgAlertRaid: true,
+  tgChatOverlay: false,
+  tgNoiseReduction: true,
+};
+
+/* ============================================================
+   Utilidades
+   ============================================================ */
+function sysLog(msg, type = 'info') {
+  const box = document.getElementById('sysLog');
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-time">[${time}]</span><span class="log-msg ${type}">${msg}</span>`;
+  box.appendChild(entry);
+  box.scrollTop = box.scrollHeight;
+}
+
+function toast(msg, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  const icons = {
+    success: '✓', error: '✗', warn: '⚠', info: 'ℹ'
+  };
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icons[type]||'ℹ'}</span><span>${msg}</span>`;
+  container.appendChild(t);
+  setTimeout(() => t.remove(), 3100);
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
+}
+
+function updateChip(id, label, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const dot = el.querySelector('.dot');
+  const span = el.querySelector('span');
+  el.className = `chip ${cls}`;
+  span.textContent = label;
+  if (dot) {
+    dot.className = 'dot' + (cls === 'active' ? ' pulse' : '');
+    dot.style.background = cls === 'active' ? 'var(--success)' : cls === 'error' ? 'var(--error)' : 'var(--outline)';
+  }
+}
+
+/* ============================================================
+   Enumeración de Dispositivos
+   ============================================================ */
+async function enumDevices() {
+  sysLog('Iniciando escaneo de dispositivos...', 'info');
+  try {
+    // Solicitar permisos primero
+    const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(() => null);
+    if (tempStream) tempStream.getTracks().forEach(t => t.stop());
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const camSel = document.getElementById('camSelect');
+    const micSel = document.getElementById('micSelect');
+    const mic2Sel = document.getElementById('mic2Select');
+
+    camSel.innerHTML = '<option value="">-- Seleccionar cámara --</option>';
+    micSel.innerHTML = '<option value="">-- Seleccionar micrófono --</option>';
+    mic2Sel.innerHTML = '<option value="">-- Sin segundo micrófono --</option>';
+
+    const videoDev = devices.filter(d => d.kind === 'videoinput');
+    const audioDev = devices.filter(d => d.kind === 'audioinput');
+
+    let firstCam = null, usbAudio = null;
+
+    videoDev.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.deviceId;
+      const label = d.label || `Cámara ${camSel.options.length}`;
+      opt.textContent = label;
+      camSel.appendChild(opt);
+      // Guardar el primero disponible; si hay uno Jemdo, ese tiene prioridad silenciosa
+      if (!firstCam) firstCam = d.deviceId;
+      if (/jemdo|345f|2130/i.test(label)) {
+        firstCam = d.deviceId;
+        sysLog(`Capturadora UVC detectada: ${label}`, 'success');
+      }
+    });
+
+    audioDev.forEach(d => {
+      const label = d.label || `Micrófono ${micSel.options.length}`;
+      [micSel, mic2Sel].forEach(sel => {
+        const opt = document.createElement('option');
+        opt.value = d.deviceId;
+        opt.textContent = label;
+        sel.appendChild(opt);
+      });
+      if (/usb.?audio.*1.*0|1.*0.*usb|jemdo/i.test(label)) {
+        usbAudio = d.deviceId;
+        sysLog(`USB Audio detectado: ${label}`, 'success');
+      }
+    });
+
+    sysLog(`Encontrados: ${videoDev.length} cámara(s), ${audioDev.length} micrófono(s)`, 'success');
+
+    // Auto-seleccionar la primera cámara disponible (o la UVC detectada)
+    const autoSel = document.getElementById('tgAutoSelect').checked;
+    if (autoSel && firstCam) {
+      camSel.value = firstCam;
+      sysLog('Cámara seleccionada automáticamente', 'success');
+    }
+
+    const autoMic = document.getElementById('tgAutoMic').checked;
+    if (autoMic && usbAudio) {
+      micSel.value = usbAudio;
+      sysLog('USB Audio seleccionado automáticamente', 'success');
+      // Si ya hay stream activo, cambiar al mic detectado
+      if (STATE.stream) startMic(usbAudio);
+    }
+
+    toast(`${videoDev.length} cámara(s) encontrada(s)`, 'success');
+  } catch (err) {
+    sysLog(`Error al enumerar: ${err.message}`, 'error');
+    toast('Error al acceder a dispositivos', 'error');
+  }
+}
+
+/* ============================================================
+   Control de Cámara
+   ============================================================ */
+async function startCamera() {
+  stopCamera();
+  const sel = document.getElementById('camSelect');
+  const resVal = document.getElementById('resSelect').value;
+  const [w, h, fps] = resVal.split('x').map(Number);
+  const micSel = document.getElementById('micSelect');
+
+  // Construir constraints de video
+  const videoConstraints = {
+    width: { ideal: w },
+    height: { ideal: h },
+    frameRate: { ideal: fps },
+  };
+  if (sel.value) videoConstraints.deviceId = { exact: sel.value };
+
+  // Construir constraints de audio — siempre pedimos micrófono
+  // para que el browser muestre el diálogo de permiso en un solo paso
+  let audioConstraints = true; // permiso genérico por defecto
+  if (micSel.value) {
+    audioConstraints = { deviceId: { exact: micSel.value } };
+  } else if (document.getElementById('tgAutoMic').checked) {
+    // Intentar con cualquier audio disponible
+    audioConstraints = true;
+  }
+
+  const constraints = {
+    video: videoConstraints,
+    audio: audioConstraints,   // ← SIEMPRE pedimos audio aquí
+  };
+
+  sysLog(`Solicitando permisos de cámara + micrófono...`, 'info');
+  sysLog(`Iniciando stream ${w}x${h}@${fps}fps...`, 'info');
+
+  try {
+    STATE.stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const videoEl = document.getElementById('videoEl');
+
+    // Separar tracks: video al elemento, audio al WebAudio API
+    const videoOnlyStream = new MediaStream(STATE.stream.getVideoTracks());
+    videoEl.srcObject = videoOnlyStream;
+
+    // Iniciar pipeline de audio con las pistas de audio del stream principal
+    const audioTracks = STATE.stream.getAudioTracks();
+    if (audioTracks.length > 0) {
+      sysLog(`Pistas de audio obtenidas: ${audioTracks.map(t => t.label || 'mic').join(', ')}`, 'success');
+      // Actualizar selector de mic con el dispositivo activo
+      const activeAudioId = audioTracks[0].getSettings().deviceId;
+      if (activeAudioId && micSel.value === '') {
+        // Marcar en el selector el mic que se está usando
+        for (const opt of micSel.options) {
+          if (opt.value === activeAudioId) { micSel.value = activeAudioId; break; }
+        }
+      }
+      // Conectar al Web Audio API para vúmetro y monitoreo
+      initAudioPipeline(STATE.stream);
+    } else {
+      sysLog('No se obtuvieron pistas de audio (verifica permisos)', 'warn');
+    }
+
+    videoEl.onloadedmetadata = () => {
+      const { videoWidth, videoHeight } = videoEl;
+      const fpsActual = (STATE.stream.getVideoTracks()[0].getSettings().frameRate || fps);
+      sysLog(`Pipeline activo: ${videoWidth}x${videoHeight}@${fpsActual.toFixed(0)}fps`, 'success');
+      document.getElementById('hudRes').textContent = `${videoWidth}×${videoHeight}`;
+      document.getElementById('sidebarRes').textContent = `${videoWidth}×${videoHeight}`;
+      updateChip('chipDevice', `${videoWidth}×${videoHeight}`, 'active');
+      // Iniciar pipeline RAW de capturadora una vez el video element tiene srcObject
+      initCaptureAudioRaw();
+    };
+
+    document.getElementById('noSignal').classList.add('hidden');
+    STATE.startTime = Date.now();
+    startTelemetry();
+    updateFilters();
+
+    sysLog('Stream de video activo ✓', 'success');
+    toast('Cámara y micrófono iniciados ✓', 'success');
+
+  } catch (err) {
+    sysLog(`Error al iniciar: ${err.name} — ${err.message}`, 'error');
+    if (err.name === 'NotAllowedError') {
+      toast('Permiso denegado por el usuario', 'error');
+      sysLog('Asegúrate de permitir cámara Y micrófono en el diálogo del navegador', 'warn');
+    } else if (err.name === 'NotFoundError') {
+      toast('Dispositivo no encontrado', 'error');
+    } else {
+      toast(`Error: ${err.name}`, 'error');
+    }
+    updateChip('chipDevice', 'Error', 'error');
+  }
+}
+
+/* Inicializar pipeline de Web Audio a partir de un MediaStream (micrófono) */
+function initAudioPipeline(stream) {
+  try {
+    if (!STATE.audioCtx) {
+      STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume();
+
+    // Desconectar nodos anteriores si existen
+    if (STATE.micGainNode) { try { STATE.micGainNode.disconnect(); } catch(e){} }
+    if (STATE.analyserNode) { try { STATE.analyserNode.disconnect(); } catch(e){} }
+    if (STATE.monitorNode) { try { STATE.monitorNode.disconnect(); } catch(e){} }
+    if (STATE.noiseFilterNode) { try { STATE.noiseFilterNode.disconnect(); } catch(e){} }
+
+    const source = STATE.audioCtx.createMediaStreamSource(stream);
+
+    STATE.analyserNode = STATE.audioCtx.createAnalyser();
+    STATE.analyserNode.fftSize = 256;
+
+    STATE.micGainNode = STATE.audioCtx.createGain();
+    STATE.micGainNode.gain.value = document.getElementById('tgMuteMic').checked ? 0
+      : parseFloat(document.getElementById('slMicVol').value) / 100;
+
+    STATE.monitorNode = STATE.audioCtx.createGain();
+    STATE.monitorNode.gain.value = document.getElementById('tgAudioMonitor').checked ? 1 : 0;
+
+    const noiseEnabled = document.getElementById('tgNoiseReduction').checked;
+
+    if (noiseEnabled) {
+      // Filtro paso de banda: elimina frecuencias fuera del rango de voz (80 Hz – 8000 Hz)
+      // Paso alto para cortar rumble/hum de fondo
+      const highPass = STATE.audioCtx.createBiquadFilter();
+      highPass.type = 'highpass';
+      highPass.frequency.value = 80;
+      highPass.Q.value = 0.7;
+
+      // Paso bajo para cortar sibilancias y ruido de alta frecuencia
+      const lowPass = STATE.audioCtx.createBiquadFilter();
+      lowPass.type = 'lowpass';
+      lowPass.frequency.value = 8000;
+      lowPass.Q.value = 0.7;
+
+      STATE.noiseFilterNode = highPass; // guardamos referencia al primero de la cadena
+
+      // Grafo mic: source → highPass → lowPass → analyser (medición)
+      //            source → highPass → lowPass → micGain → monitor → speakers
+      source.connect(highPass);
+      highPass.connect(lowPass);
+      lowPass.connect(STATE.analyserNode);
+      lowPass.connect(STATE.micGainNode);
+    } else {
+      // Sin filtro — señal directa al analizador y gain
+      STATE.noiseFilterNode = null;
+      source.connect(STATE.analyserNode);
+      source.connect(STATE.micGainNode);
+    }
+
+    STATE.micGainNode.connect(STATE.monitorNode);
+    STATE.monitorNode.connect(STATE.audioCtx.destination);
+
+    STATE.micStream = stream;
+    startVuMeter();
+
+    const nrLabel = noiseEnabled ? 'con Noise Reduction activo' : 'sin Noise Reduction (crudo)';
+    sysLog(`Pipeline de micrófono activo ${nrLabel} ✓`, 'success');
+  } catch (err) {
+    sysLog(`Error en pipeline de audio: ${err.message}`, 'error');
+  }
+}
+
+/* Pipeline RAW para la capturadora: el audio del video element va directo al
+   AudioContext sin ningún nodo de procesamiento intermedio. Solo se controla
+   el volumen a nivel del elemento HTML (no hay filtros de ningún tipo). */
+function initCaptureAudioRaw() {
+  try {
+    const videoEl = document.getElementById('videoEl');
+    if (!videoEl.srcObject) return;
+
+    if (!STATE.audioCtx) {
+      STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (STATE.audioCtx.state === 'suspended') STATE.audioCtx.resume();
+
+    // Desconectar nodo de capturadora anterior si existe
+    if (STATE.captureSourceNode) { try { STATE.captureSourceNode.disconnect(); } catch(e){} }
+
+    // Crear source desde el elemento de video — completamente RAW
+    STATE.captureSourceNode = STATE.audioCtx.createMediaElementSource(videoEl);
+
+    // Nodo de ganancia RAW: solo controla volumen, cero procesamiento
+    if (!STATE.captureGainNode) {
+      STATE.captureGainNode = STATE.audioCtx.createGain();
+    }
+    const muteCap = document.getElementById('tgMuteCapture').checked;
+    STATE.captureGainNode.gain.value = muteCap ? 0
+      : parseFloat(document.getElementById('slCaptureVol').value) / 100;
+
+    // Grafo RAW: videoElement → gainRaw → speakers (sin nada en medio)
+    STATE.captureSourceNode.connect(STATE.captureGainNode);
+    STATE.captureGainNode.connect(STATE.audioCtx.destination);
+
+    sysLog('Pipeline de capturadora RAW activo ✓ (sin procesamiento)', 'success');
+  } catch (err) {
+    // Si el elemento ya está conectado al AudioContext, no es un error crítico
+    if (!err.message.includes('already connected')) {
+      sysLog(`Capturadora RAW: ${err.message}`, 'warn');
+    }
+  }
+}
+
+function stopCamera() {
+  if (STATE.stream) {
+    STATE.stream.getTracks().forEach(t => t.stop());
+    STATE.stream = null;
+  }
+  // Limpiar stream de mic si era independiente
+  if (STATE.micStream && STATE.micStream !== STATE.stream) {
+    STATE.micStream.getTracks().forEach(t => t.stop());
+    STATE.micStream = null;
+  }
+  // Desconectar nodos de audio
+  try {
+    if (STATE.monitorNode) { STATE.monitorNode.disconnect(); STATE.monitorNode = null; }
+    if (STATE.micGainNode) { STATE.micGainNode.disconnect(); STATE.micGainNode = null; }
+    if (STATE.analyserNode) { STATE.analyserNode.disconnect(); STATE.analyserNode = null; }
+    if (STATE.noiseFilterNode) { STATE.noiseFilterNode.disconnect(); STATE.noiseFilterNode = null; }
+    if (STATE.captureSourceNode) { STATE.captureSourceNode.disconnect(); STATE.captureSourceNode = null; }
+    if (STATE.captureGainNode) { STATE.captureGainNode.disconnect(); STATE.captureGainNode = null; }
+  } catch(e) {}
+
+  const videoEl = document.getElementById('videoEl');
+  videoEl.srcObject = null;
+  document.getElementById('noSignal').classList.remove('hidden');
+  stopTelemetry();
+  updateChip('chipDevice', 'Sin señal', '');
+  if (STATE.vuAnimFrame) { cancelAnimationFrame(STATE.vuAnimFrame); STATE.vuAnimFrame = null; }
+  sysLog('Stream de video y audio detenidos', 'warn');
+}
+
+function onCamChange() {
+  if (STATE.stream) startCamera();
+}
+
+/* ============================================================
+   Telemetría y HUD
+   ============================================================ */
+function startTelemetry() {
+  stopTelemetry();
+
+  // FPS Counter usando requestAnimationFrame
+  let frameTimestamps = [];
+  let lastJitterCalc = performance.now();
+
+  function countFrame(ts) {
+    if (!STATE.stream) return;
+
+    frameTimestamps.push(ts);
+    const cutoff = ts - 1000;
+    while (frameTimestamps.length > 0 && frameTimestamps[0] < cutoff) {
+      frameTimestamps.shift();
+    }
+    STATE.fps = frameTimestamps.length;
+
+    // Calcular jitter
+    if (frameTimestamps.length >= 2) {
+      const diffs = [];
+      for (let i = 1; i < frameTimestamps.length; i++) {
+        diffs.push(frameTimestamps[i] - frameTimestamps[i-1]);
+      }
+      const avg = diffs.reduce((a,b) => a+b, 0) / diffs.length;
+      const jitter = Math.sqrt(diffs.reduce((a,b) => a + Math.pow(b-avg, 2), 0) / diffs.length);
+      STATE.jitterMs = jitter.toFixed(1);
+    }
+
+    requestAnimationFrame(countFrame);
+  }
+
+  requestAnimationFrame(countFrame);
+
+  // Actualizar HUD cada 500ms
+  STATE.fpsInterval = setInterval(() => {
+    const fps = STATE.fps;
+    const jitter = STATE.jitterMs;
+
+    document.getElementById('hudFPS').textContent = fps;
+    document.getElementById('hudJitter').innerHTML = `${jitter}<span style="font-size:10px;font-weight:400;">ms</span>`;
+    document.getElementById('sidebarFPS').textContent = fps;
+    document.getElementById('sidebarJitter').textContent = jitter + 'ms';
+
+    // Color de FPS según rendimiento
+    const fpsEl = document.getElementById('hudFPS');
+    if (fps >= 55) fpsEl.style.color = 'var(--hud-fps)';
+    else if (fps >= 28) fpsEl.style.color = 'var(--hud-jitter)';
+    else fpsEl.style.color = 'var(--error)';
+  }, 500);
+
+  // Uptime counter
+  STATE.uptimeInterval = setInterval(() => {
+    if (!STATE.startTime) return;
+    const elapsed = Math.floor((Date.now() - STATE.startTime) / 1000);
+    const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+    const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+    const s = String(elapsed % 60).padStart(2, '0');
+    const t = `${h}:${m}:${s}`;
+    document.getElementById('hudUptime').textContent = t;
+    document.getElementById('sidebarUptime').textContent = t;
+  }, 1000);
+}
+
+function stopTelemetry() {
+  clearInterval(STATE.fpsInterval);
+  clearInterval(STATE.uptimeInterval);
+  document.getElementById('hudFPS').textContent = '--';
+  document.getElementById('hudJitter').innerHTML = '--<span style="font-size:10px;font-weight:400;">ms</span>';
+  document.getElementById('hudUptime').textContent = '00:00:00';
+}
+
+function toggleHUDVis() {
+  const show = document.getElementById('tgHUD').checked;
+  document.getElementById('hud').classList.toggle('hidden', !show);
+}
+
+/* ============================================================
+   Auto-ocultar Interfaz
+   ============================================================ */
+function setupAutoHide() {
+  const mainArea = document.getElementById('main-area');
+
+  const showUI = () => {
+    if (!STATE.uiVisible) {
+      document.getElementById('controls-bar').classList.remove('hidden');
+      document.getElementById('hud').classList.remove('hidden');
+      STATE.uiVisible = true;
+    }
+    clearTimeout(STATE.autoHideTimeout);
+    if (document.getElementById('tgAutoHide').checked && !document.getElementById('tgAlwaysControls').checked) {
+      STATE.autoHideTimeout = setTimeout(() => {
+        document.getElementById('controls-bar').classList.add('hidden');
+        if (document.getElementById('tgHUD').checked) {
+          document.getElementById('hud').classList.add('hidden');
+        }
+        STATE.uiVisible = false;
+      }, 3000);
+    }
+  };
+
+  mainArea.addEventListener('mousemove', showUI);
+  mainArea.addEventListener('touchstart', showUI);
+  mainArea.addEventListener('click', showUI);
+}
+
+/* ============================================================
+   Filtros de Video CSS
+   ============================================================ */
+function updateFilters() {
+  const b = document.getElementById('slBrightness').value;
+  const c = document.getElementById('slContrast').value;
+  const s = document.getElementById('slSaturation').value;
+  const h = document.getElementById('slHue').value;
+  const o = document.getElementById('slOpacity').value;
+  const mirror = document.getElementById('tgMirror').checked;
+  const invert = document.getElementById('tgInvert').checked;
+  const gray = document.getElementById('tgGrayscale').checked;
+
+  document.getElementById('valBrightness').textContent = b;
+  document.getElementById('valContrast').textContent = c;
+  document.getElementById('valSaturation').textContent = s;
+  document.getElementById('valHue').textContent = h;
+  document.getElementById('valOpacity').textContent = o;
+
+  const videoEl = document.getElementById('videoEl');
+  let filterStr = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg)`;
+  if (invert) filterStr += ' invert(1)';
+  if (gray) filterStr += ' grayscale(1)';
+
+  videoEl.style.filter = filterStr;
+  videoEl.style.opacity = o / 100;
+  videoEl.style.transform = mirror ? 'scaleX(-1)' : '';
+
+  savePrefs();
+}
+
+/* ============================================================
+   Audio: Micrófono y Vúmetro
+   ============================================================ */
+async function startMic(deviceId) {
+  try {
+    if (!STATE.audioCtx) {
+      STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (STATE.audioCtx.state === 'suspended') await STATE.audioCtx.resume();
+
+    // Detener stream de mic anterior si era independiente
+    if (STATE.micStream && STATE.micStream !== STATE.stream) {
+      STATE.micStream.getTracks().forEach(t => t.stop());
+      STATE.micStream = null;
+    }
+
+    const noiseEnabled = document.getElementById('tgNoiseReduction').checked;
+
+    // Constraints del micrófono — con o sin supresión nativa del navegador
+    let audioConstraints = {
+      noiseSuppression: noiseEnabled,
+      echoCancellation: noiseEnabled,
+      autoGainControl: noiseEnabled,
+    };
+    if (deviceId) audioConstraints.deviceId = { exact: deviceId };
+
+    const newMicStream = await navigator.mediaDevices.getUserMedia({
+      audio: audioConstraints,
+      video: false,
+    });
+
+    // Parar pistas de audio del stream principal para evitar eco
+    if (STATE.stream) {
+      STATE.stream.getAudioTracks().forEach(t => t.stop());
+    }
+
+    STATE.micStream = newMicStream;
+    initAudioPipeline(newMicStream);
+
+    const nrLabel = noiseEnabled ? ' + NR' : ' RAW';
+    sysLog(`Micrófono activo: ${newMicStream.getAudioTracks()[0]?.label || 'mic'}${nrLabel}`, 'success');
+    toast(`Micrófono activo${nrLabel} ✓`, 'success');
+  } catch (err) {
+    sysLog(`Error micrófono: ${err.name} — ${err.message}`, 'error');
+    if (err.name === 'NotAllowedError') {
+      toast('Permiso de micrófono denegado', 'error');
+    } else {
+      toast('No se pudo acceder al micrófono', 'error');
+    }
+  }
+}
+
+function onMicChange() {
+  const val = document.getElementById('micSelect').value;
+  if (val) startMic(val);
+}
+
+function toggleAudioMonitor() {
+  const on = document.getElementById('tgAudioMonitor').checked;
+  if (STATE.monitorNode) {
+    // Fade suave para evitar clics de audio
+    const now = STATE.audioCtx.currentTime;
+    STATE.monitorNode.gain.cancelScheduledValues(now);
+    STATE.monitorNode.gain.setTargetAtTime(on ? 1 : 0, now, 0.05);
+    sysLog(`Monitor de audio: ${on ? 'activado' : 'desactivado'}`, 'info');
+  } else if (on && STATE.stream) {
+    // Si hay stream pero no hay nodo aún, inicializar pipeline
+    initAudioPipeline(STATE.stream);
+    sysLog('Pipeline de audio inicializado desde monitor toggle', 'info');
+  } else if (on) {
+    // Sin stream, pedir solo micrófono
+    const micSel = document.getElementById('micSelect');
+    startMic(micSel.value || undefined);
+  }
+}
+
+function updateMixerVolumes() {
+  const captVol = parseInt(document.getElementById('slCaptureVol').value);
+  const micVol = parseInt(document.getElementById('slMicVol').value);
+  const muteCap = document.getElementById('tgMuteCapture').checked;
+  const muteMic = document.getElementById('tgMuteMic').checked;
+
+  document.getElementById('valCaptureVol').textContent = captVol;
+  document.getElementById('valMicVol').textContent = micVol;
+
+  // Capturadora RAW: controlar via nodo de ganancia (no hay procesamiento)
+  if (STATE.captureGainNode) {
+    STATE.captureGainNode.gain.value = muteCap ? 0 : captVol / 100;
+  } else {
+    // Fallback: control de volumen directo en el elemento de video
+    const videoEl = document.getElementById('videoEl');
+    videoEl.volume = muteCap ? 0 : Math.min(captVol / 100, 1);
+  }
+
+  // Micrófono: controlar via micGainNode del pipeline NR
+  if (STATE.micGainNode) {
+    STATE.micGainNode.gain.value = muteMic ? 0 : micVol / 100;
+  }
+
+  savePrefs();
+}
+
+/* ============================================================
+   Vúmetro en Canvas
+   ============================================================ */
+function startVuMeter() {
+  const canvas = document.getElementById('vuCanvas');
+  const ctx = canvas.getContext('2d');
+
+  if (STATE.vuAnimFrame) cancelAnimationFrame(STATE.vuAnimFrame);
+
+  function draw() {
+    if (!STATE.analyserNode) return;
+    STATE.vuAnimFrame = requestAnimationFrame(draw);
+
+    const bufLen = STATE.analyserNode.frequencyBinCount;
+    const data = new Uint8Array(bufLen);
+    STATE.analyserNode.getByteFrequencyData(data);
+
+    const avg = data.reduce((a, b) => a + b, 0) / bufLen;
+    const level = avg / 255;
+
+    const W = canvas.width = canvas.offsetWidth || 250;
+    const H = canvas.height = canvas.offsetHeight || 32;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Fondo
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fillRect(0, 0, W, H);
+
+    // Barra de nivel
+    const grad = ctx.createLinearGradient(0, 0, W, 0);
+    const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+    grad.addColorStop(0, primary);
+    grad.addColorStop(0.7, '#f9d975');
+    grad.addColorStop(1, '#f28b82');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W * level, H);
+
+    // Segmentos
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    for (let i = 0; i < 20; i++) {
+      ctx.fillRect(i * (W/20), 0, 1, H);
+    }
+  }
+
+  draw();
+}
+
+/* ============================================================
+   Segundo Micrófono (Stream)
+   ============================================================ */
+async function toggleMic2() {
+  const enabled = document.getElementById('tgMic2Enable').checked;
+  const sel = document.getElementById('mic2Select');
+  sel.disabled = !enabled;
+
+  if (!enabled) {
+    if (STATE.mic2Stream) {
+      STATE.mic2Stream.getTracks().forEach(t => t.stop());
+      STATE.mic2Stream = null;
+    }
+    return;
+  }
+
+  // Enumerar si no hay opciones
+  if (sel.options.length <= 1) {
+    await enumDevices();
+  }
+}
+
+/* ============================================================
+   Twitch IRC / Stream
+   ============================================================ */
+function startTwitchStream() {
+  const key = document.getElementById('twitchKey').value.trim();
+  const channel = document.getElementById('twitchChannel').value.trim().toLowerCase();
+
+  if (!key) {
+    toast('Ingresa tu Stream Key de Twitch', 'warn');
+    return;
+  }
+
+  if (!STATE.stream) {
+    toast('Inicia la cámara primero', 'warn');
+    return;
+  }
+
+  sysLog('Intentando conectar con Twitch...', 'info');
+
+  // Conectar chat IRC via WebSocket
+  if (channel) connectTwitchChat(channel);
+
+  // Iniciar grabación/stream via MediaRecorder → RTMP (simulado en browser)
+  // Nota: browsers no soportan RTMP nativo, pero podemos usar un proxy o la API de grabación
+  try {
+    const tracks = [];
+    STATE.stream.getVideoTracks().forEach(t => tracks.push(t));
+    if (STATE.micStream) STATE.micStream.getAudioTracks().forEach(t => tracks.push(t));
+
+    const combinedStream = new MediaStream(tracks);
+    STATE.mediaRecorder = new MediaRecorder(combinedStream, {
+      mimeType: 'video/webm;codecs=h264,opus',
+    });
+
+    STATE.mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        sysLog(`Chunk de stream: ${(e.data.size/1024).toFixed(1)}KB`, 'info');
+      }
+    };
+
+    STATE.mediaRecorder.start(1000);
+    STATE.twitchStreaming = true;
+
+    document.getElementById('liveIndicator').classList.add('active');
+    document.getElementById('btnGoLive').disabled = true;
+    document.getElementById('btnStopLive').disabled = false;
+    updateChip('chipStream', 'EN VIVO', 'active');
+    sysLog(`Stream iniciado (${key.substring(0,8)}...)`, 'success');
+    toast('¡En vivo! Stream activo', 'success');
+
+    // Nota informativa sobre RTMP
+    sysLog('⚠ Nota: Para RTMP real necesitas un proxy/servidor WebRTC→RTMP (ej: OBS, Nginx-RTMP)', 'warn');
+
+  } catch (err) {
+    sysLog(`Error iniciando stream: ${err.message}`, 'error');
+    toast(`Error de stream: ${err.name}`, 'error');
+  }
+}
+
+function stopTwitchStream() {
+  if (STATE.mediaRecorder && STATE.mediaRecorder.state !== 'inactive') {
+    STATE.mediaRecorder.stop();
+  }
+  STATE.twitchStreaming = false;
+
+  if (STATE.twitchSocket) {
+    STATE.twitchSocket.close();
+    STATE.twitchSocket = null;
+  }
+
+  document.getElementById('liveIndicator').classList.remove('active');
+  document.getElementById('btnGoLive').disabled = false;
+  document.getElementById('btnStopLive').disabled = true;
+  updateChip('chipStream', 'Offline', '');
+  sysLog('Stream detenido', 'warn');
+  toast('Stream detenido', 'warn');
+}
+
+/* ============================================================
+   Twitch IRC Chat
+   ============================================================ */
+function connectTwitchChat(channel) {
+  try {
+    const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+    STATE.twitchSocket = ws;
+
+    ws.onopen = () => {
+      ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership');
+      ws.send('PASS oauth:justinfan' + Math.floor(Math.random()*99999));
+      ws.send('NICK justinfan' + Math.floor(Math.random()*99999));
+      ws.send(`JOIN #${channel}`);
+      sysLog(`Conectado al chat: #${channel}`, 'success');
+    };
+
+    ws.onmessage = (e) => {
+      const raw = e.data;
+
+      // PING/PONG para mantener conexión
+      if (raw.startsWith('PING')) {
+        ws.send('PONG :tmi.twitch.tv');
+        return;
+      }
+
+      // Parsear mensaje de chat
+      const match = raw.match(/^@([^ ]+) :(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(.+)$/);
+      if (match) {
+        const tags = parseTwitchTags(match[1]);
+        const user = tags.display_name || match[2];
+        const msg = match[3].trim();
+        const color = tags.color || '#d0bcff';
+
+        addChatMessage(user, msg, color);
+
+        // TTS
+        if (document.getElementById('tgTTS').checked) {
+          speakTTS(`${user} dice: ${msg}`);
+        }
+      }
+
+      // Detectar eventos del canal
+      if (raw.includes('USERNOTICE')) {
+        const msgId = raw.match(/msg-id=(\w+)/)?.[1];
+        const displayName = raw.match(/display-name=([^;]+)/)?.[1] || 'Alguien';
+        if (msgId === 'sub' || msgId === 'resub') {
+          if (document.getElementById('tgAlertSub').checked) {
+            showAlert(`🎉 ¡${displayName} se suscribió!`, 'sub');
+          }
+        } else if (msgId === 'raid') {
+          if (document.getElementById('tgAlertRaid').checked) {
+            showAlert(`⚔️ ¡Raid de ${displayName}!`, 'raid');
+          }
+        }
+      }
+    };
+
+    ws.onerror = () => {
+      sysLog('Error de conexión con Twitch IRC', 'error');
+    };
+
+    ws.onclose = () => {
+      sysLog('Chat Twitch desconectado', 'warn');
+    };
+
+  } catch (err) {
+    sysLog(`Error IRC: ${err.message}`, 'error');
+  }
+}
+
+function parseTwitchTags(tagStr) {
+  const tags = {};
+  tagStr.split(';').forEach(t => {
+    const [k, v] = t.split('=');
+    tags[k.replace(/-/g, '_')] = v || '';
+  });
+  return tags;
+}
+
+function addChatMessage(user, msg, color = '#d0bcff') {
+  const chatLog = document.getElementById('twitchChatLog');
+  const entry = document.createElement('div');
+  entry.className = 'chat-msg';
+  entry.innerHTML = `<span class="chat-user" style="color:${color}">${user}</span>: <span class="chat-text">${escapeHtml(msg)}</span>`;
+  chatLog.appendChild(entry);
+  chatLog.scrollTop = chatLog.scrollHeight;
+
+  // Overlay de chat
+  if (document.getElementById('tgChatOverlay').checked) {
+    addChatOverlayMessage(user, msg, color);
+  }
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ============================================================
+   Overlay del Chat en Video
+   ============================================================ */
+function toggleChatOverlay() {
+  const el = document.getElementById('chatOverlayEl');
+  const on = document.getElementById('tgChatOverlay').checked;
+  el.style.display = on ? 'block' : 'none';
+  updateChatOverlay();
+}
+
+function updateChatOverlay() {
+  const el = document.getElementById('chatOverlayEl');
+  const pos = document.getElementById('chatOverlayPos').value;
+  el.style.top = '';
+  el.style.bottom = '';
+  el.style.left = '';
+  el.style.right = '';
+
+  if (pos === 'bl') { el.style.bottom = '60px'; el.style.left = '16px'; }
+  else if (pos === 'br') { el.style.bottom = '60px'; el.style.right = '16px'; }
+  else if (pos === 'tl') { el.style.top = '60px'; el.style.left = '16px'; }
+  else if (pos === 'tr') { el.style.top = '60px'; el.style.right = '16px'; }
+}
+
+function addChatOverlayMessage(user, msg, color) {
+  const el = document.getElementById('chatOverlayEl');
+  const bubble = document.createElement('div');
+  bubble.style.cssText = `
+    background: rgba(0,0,0,0.65);
+    border-left: 3px solid ${color};
+    border-radius: 8px;
+    padding: 4px 8px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    animation: fadeInUp 0.3s ease;
+    backdrop-filter: blur(8px);
+  `;
+  bubble.innerHTML = `<strong style="color:${color}">${escapeHtml(user)}</strong>: ${escapeHtml(msg)}`;
+  el.appendChild(bubble);
+
+  // Limpiar mensajes antiguos
+  while (el.children.length > 6) {
+    el.removeChild(el.firstChild);
+  }
+
+  setTimeout(() => bubble.remove(), 8000);
+}
+
+/* ============================================================
+   TTS (Text-to-Speech)
+   ============================================================ */
+function loadTTSVoices() {
+  const sel = document.getElementById('ttsVoice');
+  const voices = speechSynthesis.getVoices();
+  sel.innerHTML = '<option value="">-- Voz del sistema --</option>';
+  voices.forEach((v, i) => {
+    const opt = document.createElement('option');
+    opt.value = v.name;
+    opt.textContent = `${v.name} (${v.lang})`;
+    sel.appendChild(opt);
+  });
+}
+
+function speakTTS(text) {
+  if (!('speechSynthesis' in window)) return;
+  const utt = new SpeechSynthesisUtterance(text);
+  const voiceName = document.getElementById('ttsVoice').value;
+  const rate = parseFloat(document.getElementById('slTTSRate').value);
+  utt.rate = rate;
+  if (voiceName) {
+    const voices = speechSynthesis.getVoices();
+    utt.voice = voices.find(v => v.name === voiceName) || null;
+  }
+  speechSynthesis.speak(utt);
+}
+
+function testTTS() {
+  speakTTS('¡Hola! Soy FrontierMirror, tu monitor de video UVC.');
+}
+
+/* ============================================================
+   Alertas en Pantalla
+   ============================================================ */
+function showAlert(msg, type = 'follow') {
+  const el = document.getElementById('alertOverlay');
+  const colors = { follow: '#a8d5b5', sub: '#d0bcff', raid: '#f9d975' };
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="
+      background: rgba(0,0,0,0.85);
+      border: 2px solid ${colors[type] || '#d0bcff'};
+      border-radius: 24px;
+      padding: 20px 32px;
+      text-align: center;
+      backdrop-filter: blur(16px);
+      animation: fadeInUp 0.5s ease, fadeOut 0.5s ease 3.5s forwards;
+    ">
+      <div style="font-size: 28px; margin-bottom: 8px;">${msg}</div>
+    </div>
+  `;
+  setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+function simulateAlert(type) {
+  const msgs = {
+    follow: '💜 ¡prueba_usuario te siguió!',
+    sub: '🎉 ¡prueba_sub se suscribió!',
+    raid: '⚔️ ¡Raid de prueba_raid!',
+  };
+  showAlert(msgs[type] || msgs.follow, type);
+  if (document.getElementById('tgTTS').checked) {
+    speakTTS(msgs[type]);
+  }
+}
+
+/* ============================================================
+   Pantalla Completa
+   ============================================================ */
+function toggleFullscreen() {
+  const el = document.getElementById('main-area');
+  if (!document.fullscreenElement) {
+    el.requestFullscreen().catch(err => sysLog(`Fullscreen error: ${err.message}`, 'error'));
+    document.getElementById('btnFullscreen').classList.add('active');
+  } else {
+    document.exitFullscreen();
+    document.getElementById('btnFullscreen').classList.remove('active');
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) {
+    document.getElementById('btnFullscreen').classList.remove('active');
+  }
+});
+
+/* ============================================================
+   Captura de Pantalla
+   ============================================================ */
+function captureScreenshot() {
+  const videoEl = document.getElementById('videoEl');
+  if (!videoEl.srcObject) {
+    toast('No hay video activo para capturar', 'warn');
+    return;
+  }
+  const canvas = document.getElementById('captureCanvas');
+  canvas.width = videoEl.videoWidth;
+  canvas.height = videoEl.videoHeight;
+  const ctx = canvas.getContext('2d');
+
+  // Aplicar transformaciones (espejo)
+  if (document.getElementById('tgMirror').checked) {
+    ctx.save();
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+  }
+
+  ctx.filter = videoEl.style.filter || '';
+  ctx.drawImage(videoEl, 0, 0);
+
+  if (document.getElementById('tgMirror').checked) ctx.restore();
+
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `frontier_${Date.now()}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Screenshot guardada', 'success');
+  }, 'image/png');
+}
+
+/* ============================================================
+   Sidebar Toggle
+   ============================================================ */
+function toggleSidebar() {
+  STATE.sidebarOpen = !STATE.sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('collapsed', !STATE.sidebarOpen);
+  const icon = document.getElementById('sidebarToggleIcon');
+  if (STATE.sidebarOpen) {
+    icon.innerHTML = '<path d="M3 12h18M3 6h18M3 18h18"/>';
+  } else {
+    icon.innerHTML = '<path d="M9 18l6-6-6-6"/>';
+  }
+}
+
+/* ============================================================
+   Temas
+   ============================================================ */
+function setTheme(name) {
+  document.documentElement.setAttribute('data-theme', name);
+  toast(`Tema: ${name}`, 'success');
+  savePrefs();
+}
+
+function toggleDeepDark() {
+  const on = document.getElementById('tgDeepDark').checked;
+  document.documentElement.style.setProperty('--bg', on ? '#000000' : '');
+  document.documentElement.style.setProperty('--surface', on ? '#050505' : '');
+  savePrefs();
+}
+
+function toggleReducedBlur() {
+  const on = document.getElementById('tgReducedBlur').checked;
+  document.documentElement.style.setProperty('--glass-blur', on ? 'blur(4px)' : 'blur(24px)');
+  savePrefs();
+}
+
+/* ============================================================
+   Persistencia de Preferencias
+   ============================================================ */
+function savePrefs(showToast = false) {
+  const prefs = {
+    theme: document.documentElement.getAttribute('data-theme') || 'violet',
+    brightness: document.getElementById('slBrightness').value,
+    contrast: document.getElementById('slContrast').value,
+    saturation: document.getElementById('slSaturation').value,
+    hue: document.getElementById('slHue').value,
+    opacity: document.getElementById('slOpacity').value,
+    mirror: document.getElementById('tgMirror').checked,
+    invert: document.getElementById('tgInvert').checked,
+    grayscale: document.getElementById('tgGrayscale').checked,
+    autoSelect: document.getElementById('tgAutoSelect').checked,
+    autoMic: document.getElementById('tgAutoMic').checked,
+    autoStart: document.getElementById('tgAutoStart').checked,
+    alwaysControls: document.getElementById('tgAlwaysControls').checked,
+    deepDark: document.getElementById('tgDeepDark').checked,
+    reducedBlur: document.getElementById('tgReducedBlur').checked,
+    showHUD: document.getElementById('tgHUD').checked,
+    autoHide: document.getElementById('tgAutoHide').checked,
+    resolution: document.getElementById('resSelect').value,
+    captureVol: document.getElementById('slCaptureVol').value,
+    micVol: document.getElementById('slMicVol').value,
+    twitchChannel: document.getElementById('twitchChannel').value,
+    ttsRate: document.getElementById('slTTSRate').value,
+    ttsVoice: document.getElementById('ttsVoice').value,
+    tgTTS: document.getElementById('tgTTS').checked,
+    tgAlertFollow: document.getElementById('tgAlertFollow').checked,
+    tgAlertSub: document.getElementById('tgAlertSub').checked,
+    tgAlertRaid: document.getElementById('tgAlertRaid').checked,
+    tgChatOverlay: document.getElementById('tgChatOverlay').checked,
+    tgNoiseReduction: document.getElementById('tgNoiseReduction').checked,
+  };
+  localStorage.setItem('frontierMirrorPrefs', JSON.stringify(prefs));
+  if (showToast) toast('Preferencias guardadas ✓', 'success');
+}
+
+function loadPrefs() {
+  try {
+    const raw = localStorage.getItem('frontierMirrorPrefs');
+    const prefs = raw ? { ...DEFAULT_PREFS, ...JSON.parse(raw) } : DEFAULT_PREFS;
+
+    setTheme(prefs.theme);
+
+    document.getElementById('slBrightness').value = prefs.brightness;
+    document.getElementById('slContrast').value = prefs.contrast;
+    document.getElementById('slSaturation').value = prefs.saturation;
+    document.getElementById('slHue').value = prefs.hue;
+    document.getElementById('slOpacity').value = prefs.opacity;
+    document.getElementById('tgMirror').checked = prefs.mirror;
+    document.getElementById('tgInvert').checked = prefs.invert;
+    document.getElementById('tgGrayscale').checked = prefs.grayscale;
+    document.getElementById('tgAutoSelect').checked = prefs.autoSelect;
+    document.getElementById('tgAutoMic').checked = prefs.autoMic;
+    document.getElementById('tgAutoStart').checked = prefs.autoStart;
+    document.getElementById('tgAlwaysControls').checked = prefs.alwaysControls;
+    document.getElementById('tgDeepDark').checked = prefs.deepDark;
+    document.getElementById('tgReducedBlur').checked = prefs.reducedBlur;
+    document.getElementById('tgHUD').checked = prefs.showHUD;
+    document.getElementById('tgAutoHide').checked = prefs.autoHide;
+    document.getElementById('resSelect').value = prefs.resolution;
+    document.getElementById('slCaptureVol').value = prefs.captureVol;
+    document.getElementById('slMicVol').value = prefs.micVol;
+    document.getElementById('twitchChannel').value = prefs.twitchChannel || '';
+    document.getElementById('slTTSRate').value = prefs.ttsRate;
+    document.getElementById('tgTTS').checked = prefs.tgTTS;
+    document.getElementById('tgAlertFollow').checked = prefs.tgAlertFollow;
+    document.getElementById('tgAlertSub').checked = prefs.tgAlertSub;
+    document.getElementById('tgAlertRaid').checked = prefs.tgAlertRaid;
+    document.getElementById('tgChatOverlay').checked = prefs.tgChatOverlay;
+    document.getElementById('tgNoiseReduction').checked = prefs.tgNoiseReduction ?? true;
+
+    // Aplicar valores visuales
+    document.getElementById('valBrightness').textContent = prefs.brightness;
+    document.getElementById('valContrast').textContent = prefs.contrast;
+    document.getElementById('valSaturation').textContent = prefs.saturation;
+    document.getElementById('valHue').textContent = prefs.hue;
+    document.getElementById('valOpacity').textContent = prefs.opacity;
+    document.getElementById('valCaptureVol').textContent = prefs.captureVol;
+    document.getElementById('valMicVol').textContent = prefs.micVol;
+    document.getElementById('valTTSRate').textContent = parseFloat(prefs.ttsRate).toFixed(1);
+
+    if (prefs.deepDark) toggleDeepDark();
+    if (prefs.reducedBlur) toggleReducedBlur();
+    if (!prefs.showHUD) document.getElementById('hud').classList.add('hidden');
+
+    updateFilters();
+    sysLog('Preferencias cargadas desde localStorage', 'success');
+  } catch (err) {
+    sysLog(`Error al cargar preferencias: ${err.message}`, 'warn');
+  }
+}
+
+function resetPrefs() {
+  if (!confirm('¿Resetear todas las preferencias a valores por defecto?')) return;
+  localStorage.removeItem('frontierMirrorPrefs');
+  loadPrefs();
+  toast('Preferencias reseteadas', 'warn');
+  sysLog('Preferencias reseteadas a valores por defecto', 'warn');
+}
+
+function exportPrefs() {
+  const raw = localStorage.getItem('frontierMirrorPrefs') || JSON.stringify(DEFAULT_PREFS);
+  const blob = new Blob([raw], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'frontier_config.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Config exportada', 'success');
+}
+
+/* ============================================================
+   PWA Install
+   ============================================================ */
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  STATE.deferredPrompt = e;
+  sysLog('App instalable detectada (PWA)', 'success');
+});
+
+function installPWA() {
+  if (STATE.deferredPrompt) {
+    STATE.deferredPrompt.prompt();
+    STATE.deferredPrompt.userChoice.then(result => {
+      sysLog(`PWA: usuario ${result.outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`, result.outcome === 'accepted' ? 'success' : 'warn');
+      STATE.deferredPrompt = null;
+    });
+  } else {
+    toast('Abre la página en Chrome → menú (⋮) → "Instalar FrontierMirror"', 'info');
+    sysLog('Para instalar: visita la página en Chrome → ⋮ → "Instalar FrontierMirror" (requiere HTTPS)', 'info');
+  }
+}
+
+/* ============================================================
+   Service Worker (Offline Cache — cachea index.html completo)
+   ============================================================ */
+const CACHE_NAME = 'frontier-mirror-v2';
+const SW_CODE = `
+const CACHE = '${CACHE_NAME}';
+const URLS_TO_CACHE = [
+  self.registration.scope,
+  self.registration.scope + 'index.html',
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(cache => {
+      // Cachear el propio index.html al instalar
+      return Promise.all(
+        URLS_TO_CACHE.map(url =>
+          fetch(url).then(res => {
+            if (res.ok) return cache.put(url, res);
+          }).catch(() => {})
+        )
+      );
+    }).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  // Solo interceptar GET
+  if (e.request.method !== 'GET') return;
+
+  // Estrategia: Network-first con fallback a cache
+  e.respondWith(
+    fetch(e.request)
+      .then(res => {
+        // Si la respuesta es válida, la guardamos en cache y la devolvemos
+        if (res && res.status === 200 && res.type !== 'opaque') {
+          const resClone = res.clone();
+          caches.open(CACHE).then(cache => cache.put(e.request, resClone));
+        }
+        return res;
+      })
+      .catch(() => {
+        // Sin internet: servir desde cache
+        return caches.match(e.request).then(cached => {
+          if (cached) return cached;
+          // Si pedimos la raíz o index.html, servir desde cache directamente
+          const url = e.request.url;
+          if (url.endsWith('/') || url.endsWith('index.html')) {
+            return caches.match(self.registration.scope + 'index.html')
+              || caches.match(self.registration.scope);
+          }
+          return new Response('<h1>Offline</h1>', {
+            headers: { 'Content-Type': 'text/html' }
+          });
+        });
+      })
+  );
+});
+`;
+
+if ('serviceWorker' in navigator) {
+  const swBlob = new Blob([SW_CODE], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl, { scope: './' })
+    .then(reg => {
+      sysLog('Service Worker registrado — offline cache activo ✓', 'success');
+      // Forzar actualización del SW si hay una versión nueva
+      reg.addEventListener('updatefound', () => {
+        sysLog('SW actualizado, recargando cache...', 'info');
+      });
+    })
+    .catch(err => sysLog(`SW error: ${err.message}`, 'warn'));
+}
+
+/* ============================================================
+   Animaciones CSS de entrada
+   ============================================================ */
+const fadeOutCSS = `
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+`;
+const styleEl = document.createElement('style');
+styleEl.textContent = fadeOutCSS;
+document.head.appendChild(styleEl);
+
+/* ============================================================
+   Inicialización
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', async () => {
+  sysLog('FrontierMirror v2.0 iniciando...', 'info');
+
+  // Cargar preferencias
+  loadPrefs();
+
+  // Cargar voces TTS
+  if ('speechSynthesis' in window) {
+    speechSynthesis.onvoiceschanged = loadTTSVoices;
+    loadTTSVoices();
+  }
+
+  // Enumerar dispositivos
+  await enumDevices();
+
+  // Setup auto-hide
+  setupAutoHide();
+
+  // Dispositivos media change listener
+  navigator.mediaDevices.addEventListener('devicechange', () => {
+    sysLog('Cambio en dispositivos detectado, re-escaneando...', 'warn');
+    enumDevices();
+  });
+
+  // Auto-start si está configurado
+  if (document.getElementById('tgAutoStart').checked) {
+    setTimeout(startCamera, 500);
+  }
+
+  // Overflow de alertas CSS
+  const aStyle = document.createElement('style');
+  aStyle.textContent = `
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+      to { opacity: 0; transform: translate(-50%,-50%) scale(0.95); }
+    }
+    @keyframes liveGlow {
+      0%, 100% { box-shadow: 0 0 12px rgba(145,70,255,0.5); }
+      50% { box-shadow: 0 0 24px rgba(145,70,255,0.9); }
+    }
+  `;
+  document.head.appendChild(aStyle);
+
+  sysLog('Sistema listo ✓', 'success');
+  updateChip('footerStatus', 'Listo', 'success');
+});
+</script>
+</body>
+</html>
